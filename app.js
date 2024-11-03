@@ -80,7 +80,7 @@ app.get('/discord/callback', async (req, res) => {
     const userData = await oauth.getUser(tokenData.access_token);
 
     // Fetch the guild (server) and assign the Verified role
-    const guild = await client.guilds.fetch('YOUR_GUILD_ID'); // Replace with your server ID
+    const guild = await client.guilds.fetch('758655680667320402'); // Replace with your server ID
     const member = await guild.members.fetch(userId); // Fetch the member using user ID
 
     const verifiedRole = guild.roles.cache.find(role => role.name === 'Verified');
