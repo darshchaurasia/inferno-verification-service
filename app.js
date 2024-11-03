@@ -26,12 +26,12 @@ app.get('/discord/callback', async (req, res) => {
   const code = req.query.code;
   if (!code) return res.send('No code provided');
 
-    // Log for debugging
-    console.log("Client ID:", config.clientId);
-    console.log("Client Secret:", config.clientSecret);
-    console.log("Code received from Discord:", code);
-    console.log("Redirect URI:", config.redirectUri)
-    
+  // Log for debugging
+  console.log("Client ID:", config.clientId);
+  console.log("Client Secret:", config.clientSecret);
+  console.log("Code received from Discord:", code);
+  console.log("Redirect URI:", config.redirectUri);
+
   try {
     // Exchange the code for an access token
     const tokenData = await oauth.tokenRequest({
@@ -58,7 +58,8 @@ app.get('/discord/callback', async (req, res) => {
   }
 });
 
-// Start the server
-app.listen(config.port, () => {
-  console.log(`Server running at http://localhost:${config.port}`);
+// Start the server on the dynamic port
+const PORT = process.env.PORT || 3000;  // Use Railway's assigned port or 3000 for local development
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
