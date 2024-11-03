@@ -59,18 +59,26 @@ client.on('interactionCreate', async (interaction) => {
 // Handle button interaction for verification
 client.on('interactionCreate', async (interaction) => {
   if (interaction.isButton() && interaction.customId === 'verify') {
-    const authorizationUrl = oauth.generateAuthUrl({
-      clientId: config.clientId,
-      redirectUri: config.redirectUri,
-      scope: ['identify'],
-      responseType: 'code',
-      state: interaction.user.id, // Use Discord user ID as state
-    });
+    try {
+      // Acknowledge the interaction immediately to prevent timeout
+      await interaction.deferReply({ ephemeral: true });
 
-    await interaction.reply({
-      content: `Please click [here](${authorizationUrl}) to verify your account.`,
-      ephemeral: true, // Makes the message visible only to the user who clicked
-    });
+      // Generate the OAuth2 authorization URL
+      const authorizationUrl = oauth.generateAuthUrl({
+        clientId: config.clientId,
+        redirectUri: config.redirectUri,
+        scope: ['identify'],
+        responseType: 'code',
+        state: interaction.user.id, // Use Discord user ID as state
+      });
+
+      // Send the verification link as an edited reply
+      await interaction.editReply({
+        content: `Please click [here](${authorizationUrl}) to verify your account.`,
+      });
+    } catch (error) {
+      console.error('Error handling button interaction:', error);
+    }
   }
 });
 
