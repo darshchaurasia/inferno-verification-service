@@ -1,8 +1,7 @@
-const { REST, Routes, SlashCommandBuilder } = require('@discordjs/rest');
-const { Client, GatewayIntentBits, Partials, ActionRowBuilder, ButtonBuilder, ButtonStyle, InteractionType } = require('discord.js');
-const config = require('./config');
-const DiscordOauth2 = require('discord-oauth2');
 const express = require('express');
+const DiscordOauth2 = require('discord-oauth2');
+const { Client, GatewayIntentBits, Partials, ActionRowBuilder, ButtonBuilder, ButtonStyle, SlashCommandBuilder, REST, Routes } = require('discord.js');
+const config = require('./config');
 
 const app = express();
 const oauth = new DiscordOauth2();
@@ -31,7 +30,7 @@ client.once('ready', async () => {
   const rest = new REST({ version: '10' }).setToken(config.token);
   try {
     await rest.put(
-      Routes.applicationGuildCommands(client.user.id, 'YOUR_GUILD_ID'), // Replace with your server ID
+      Routes.applicationGuildCommands(client.user.id, '758655680667320402'), // Replace with your server ID
       { body: commands },
     );
     console.log('Slash command registered');
