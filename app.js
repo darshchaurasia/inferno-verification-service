@@ -1,13 +1,12 @@
-// app.js
-const express = require('express');
-const DiscordOauth2 = require('discord-oauth2');
-const { Client, GatewayIntentBits, Partials, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { REST, Routes, SlashCommandBuilder } = require('@discordjs/rest');
+const { Client, GatewayIntentBits, Partials, ActionRowBuilder, ButtonBuilder, ButtonStyle, InteractionType } = require('discord.js');
 const config = require('./config');
+const DiscordOauth2 = require('discord-oauth2');
+const express = require('express');
 
 const app = express();
 const oauth = new DiscordOauth2();
 
-// Discord Client setup
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -19,11 +18,29 @@ const client = new Client({
 });
 
 // Event: Bot is ready
-client.once('ready', () => {
+client.once('ready', async () => {
   console.log(`Logged in as ${client.user.tag}`);
+
+  // Register the /sendverificationbutton command
+  const commands = [
+    new SlashCommandBuilder()
+      .setName('sendverificationbutton')
+      .setDescription('Sends a verification button in the channel'),
+  ];
+
+  const rest = new REST({ version: '10' }).setToken(config.token);
+  try {
+    await rest.put(
+      Routes.applicationGuildCommands(client.user.id, 'YOUR_GUILD_ID'), // Replace with your server ID
+      { body: commands },
+    );
+    console.log('Slash command registered');
+  } catch (error) {
+    console.error('Error registering slash command:', error);
+  }
 });
 
-// Slash command to send a verification button
+// Handle the /sendverificationbutton command
 client.on('interactionCreate', async (interaction) => {
   if (!interaction.isCommand() || interaction.commandName !== 'sendverificationbutton') return;
 
@@ -48,25 +65,24 @@ client.on('interactionCreate', async (interaction) => {
       redirectUri: config.redirectUri,
       scope: ['identify'],
       responseType: 'code',
-      state: interaction.user.id, // Using user ID as state to identify user after OAuth2 flow
+      state: interaction.user.id, // Use Discord user ID as state
     });
 
     await interaction.reply({
       content: `Please click [here](${authorizationUrl}) to verify your account.`,
-      ephemeral: true, // Message visible only to the user
+      ephemeral: true, // Makes the message visible only to the user who clicked
     });
   }
 });
 
-// Step 2: Handle the OAuth2 callback from Discord
+// OAuth2 callback and role assignment (same as before)
 app.get('/discord/callback', async (req, res) => {
   const code = req.query.code;
-  const userId = req.query.state; // Retrieve the Discord user ID from state
+  const userId = req.query.state; // User ID is stored in the state parameter
 
   if (!code || !userId) return res.send('No code or user ID provided.');
 
   try {
-    // Exchange code for an access token
     const tokenData = await oauth.tokenRequest({
       clientId: config.clientId,
       clientSecret: config.clientSecret,
@@ -76,12 +92,10 @@ app.get('/discord/callback', async (req, res) => {
       grantType: 'authorization_code',
     });
 
-    // Retrieve the user’s Discord profile info
     const userData = await oauth.getUser(tokenData.access_token);
 
-    // Fetch the guild (server) and assign the Verified role
-    const guild = await client.guilds.fetch('758655680667320402'); // Replace with your server ID
-    const member = await guild.members.fetch(userId); // Fetch the member using user ID
+    const guild = await client.guilds.fetch('YOUR_GUILD_ID'); // Replace with your server ID
+    const member = await guild.members.fetch(userId); // Fetch the member by user ID
 
     const verifiedRole = guild.roles.cache.find(role => role.name === 'Verified');
     if (verifiedRole) {
@@ -102,5 +116,5 @@ app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
 
-// Log in to Discord with the bot token from config
+// Log in to Discord
 client.login(config.token);
