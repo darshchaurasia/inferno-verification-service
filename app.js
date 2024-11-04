@@ -16,6 +16,9 @@ const client = new Client({
   partials: [Partials.Channel],
 });
 
+// Track if the role assignment buttons have already been sent
+let roleButtonsSent = false;
+
 // Event: Bot is ready
 client.once('ready', async () => {
   console.log(`Logged in as ${client.user.tag}`);
@@ -44,33 +47,29 @@ client.once('ready', async () => {
 
 // Handle the /sendverificationbutton command
 client.on('interactionCreate', async (interaction) => {
-  if (interaction.isButton() && interaction.customId === 'verify') {
-    try {
-      // Acknowledge the interaction immediately to prevent timeout
-      await interaction.deferReply({ ephemeral: true });
+  if (interaction.isCommand() && interaction.commandName === 'sendverificationbutton') {
+    const row = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId('verify')
+        .setLabel('Verify')
+        .setStyle(ButtonStyle.Primary)
+    );
 
-      // Generate the OAuth2 authorization URL
-      const authorizationUrl = oauth.generateAuthUrl({
-        clientId: config.clientId,
-        redirectUri: config.redirectUri,
-        scope: ['identify'],
-        responseType: 'code',
-        state: interaction.user.id, // Use Discord user ID as state
-      });
-
-      // Send the verification link as an edited reply
-      await interaction.editReply({
-        content: `Please click [here](${authorizationUrl}) to verify your account.`,
-      });
-    } catch (error) {
-      console.error('Error handling button interaction:', error);
-    }
+    await interaction.reply({
+      content: 'Click the button below to verify and get the Verified role!',
+      components: [row],
+    });
   }
 });
 
-// Handle the /assignroles command
+// Handle the /assignroles command, allowing it to be used once
 client.on('interactionCreate', async (interaction) => {
   if (interaction.isCommand() && interaction.commandName === 'assignroles') {
+    if (roleButtonsSent) {
+      await interaction.reply({ content: 'Role assignment buttons have already been sent.', ephemeral: true });
+      return;
+    }
+
     const row = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId('assign_gamer')
@@ -82,11 +81,13 @@ client.on('interactionCreate', async (interaction) => {
         .setStyle(ButtonStyle.Primary)
     );
 
+    // Send the role assignment message publicly and set the flag to true
     await interaction.reply({
       content: 'Click a button below to assign yourself a role:',
       components: [row],
-      ephemeral: true // Optional: makes the reply visible only to the user who invoked the command
     });
+
+    roleButtonsSent = true; // Mark that the buttons have been sent
   }
 });
 
