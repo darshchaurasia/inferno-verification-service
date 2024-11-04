@@ -20,11 +20,14 @@ const client = new Client({
 client.once('ready', async () => {
   console.log(`Logged in as ${client.user.tag}`);
 
-  // Register the /sendverificationbutton command
+  // Register the /sendverificationbutton and /assignroles commands
   const commands = [
     new SlashCommandBuilder()
       .setName('sendverificationbutton')
       .setDescription('Sends a verification button in the channel'),
+    new SlashCommandBuilder()
+      .setName('assignroles')
+      .setDescription('Sends buttons to assign roles for Gamer and CS')
   ];
 
   const rest = new REST({ version: '10' }).setToken(config.token);
@@ -33,9 +36,9 @@ client.once('ready', async () => {
       Routes.applicationGuildCommands(client.user.id, '758655680667320402'), // Replace with your server ID
       { body: commands },
     );
-    console.log('Slash command registered');
+    console.log('Slash commands registered');
   } catch (error) {
-    console.error('Error registering slash command:', error);
+    console.error('Error registering slash commands:', error);
   }
 });
 
@@ -56,36 +59,58 @@ client.on('interactionCreate', async (interaction) => {
   });
 });
 
-// Handle button interaction for verification
+// Handle the /assignroles command
 client.on('interactionCreate', async (interaction) => {
-  if (interaction.isButton() && interaction.customId === 'verify') {
-    try {
-      // Acknowledge the interaction immediately to prevent timeout
-      await interaction.deferReply({ ephemeral: true });
+  if (interaction.isCommand() && interaction.commandName === 'assignroles') {
+    const row = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId('assign_gamer')
+        .setLabel('Gamer')
+        .setStyle(ButtonStyle.Primary),
+      new ButtonBuilder()
+        .setCustomId('assign_cs')
+        .setLabel('CS')
+        .setStyle(ButtonStyle.Primary)
+    );
 
-      // Generate the OAuth2 authorization URL
-      const authorizationUrl = oauth.generateAuthUrl({
-        clientId: config.clientId,
-        redirectUri: config.redirectUri,
-        scope: ['identify'],
-        responseType: 'code',
-        state: interaction.user.id, // Use Discord user ID as state
-      });
+    await interaction.reply({
+      content: 'Click a button below to assign yourself a role:',
+      components: [row],
+      ephemeral: true // Optional: makes the reply visible only to the user who invoked the command
+    });
+  }
+});
 
-      // Send the verification link as an edited reply
-      await interaction.editReply({
-        content: `Please click [here](${authorizationUrl}) to verify your account.`,
-      });
-    } catch (error) {
-      console.error('Error handling button interaction:', error);
+// Handle button interactions for role assignment
+client.on('interactionCreate', async (interaction) => {
+  if (interaction.isButton()) {
+    const guild = await client.guilds.fetch('758655680667320402'); // Replace with your server ID
+    const member = await guild.members.fetch(interaction.user.id);
+
+    if (interaction.customId === 'assign_gamer') {
+      const gamerRole = guild.roles.cache.find(role => role.name === 'Gamer');
+      if (gamerRole) {
+        await member.roles.add(gamerRole);
+        await interaction.reply({ content: 'You have been assigned the Gamer role!', ephemeral: true });
+      } else {
+        await interaction.reply({ content: 'Gamer role not found in this server.', ephemeral: true });
+      }
+    } else if (interaction.customId === 'assign_cs') {
+      const csRole = guild.roles.cache.find(role => role.name === 'CS');
+      if (csRole) {
+        await member.roles.add(csRole);
+        await interaction.reply({ content: 'You have been assigned the CS role!', ephemeral: true });
+      } else {
+        await interaction.reply({ content: 'CS role not found in this server.', ephemeral: true });
+      }
     }
   }
 });
 
-// OAuth2 callback and role assignment (same as before)
+// Existing OAuth2 callback and role assignment (unchanged)
 app.get('/discord/callback', async (req, res) => {
   const code = req.query.code;
-  const userId = req.query.state; // User ID is stored in the state parameter
+  const userId = req.query.state;
 
   if (!code || !userId) return res.send('No code or user ID provided.');
 
@@ -102,7 +127,7 @@ app.get('/discord/callback', async (req, res) => {
     const userData = await oauth.getUser(tokenData.access_token);
 
     const guild = await client.guilds.fetch('758655680667320402'); // Replace with your server ID
-    const member = await guild.members.fetch(userId); // Fetch the member by user ID
+    const member = await guild.members.fetch(userId);
 
     const verifiedRole = guild.roles.cache.find(role => role.name === 'Verified');
     if (verifiedRole) {
