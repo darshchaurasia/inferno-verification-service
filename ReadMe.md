@@ -8,19 +8,6 @@ Inferno Verification Service is a Discord bot that enables user verification thr
 - Automatically assigns a "Verified" role to users upon successful verification.
 - Built with `discord.js` and integrates with the Discord OAuth2 API.
 
-## Table of Contents
-
-- [Requirements](#requirements)
-- [Installation](#installation)
-- [Environment Variables](#environment-variables)
-- [Commands](#commands)
-- [Usage](#usage)
-- [Deployment](#deployment)
-- [Troubleshooting](#troubleshooting)
-- [License](#license)
-
----
-
 ## Requirements
 
 - [Node.js](https://nodejs.org/) v16.6.0 or higher
@@ -35,17 +22,21 @@ Inferno Verification Service is a Discord bot that enables user verification thr
    cd inferno-verification-service```
 
 2. Install dependencies:
-```npm install```
+```
+npm install
+```
 
 ## Environment Variables
 
 Create a .env file in the root directory and configure the following variables:
 
-```CLIENT_ID=your_client_id            # Discord Application Client ID
+````
+CLIENT_ID=your_client_id            # Discord Application Client ID
 CLIENT_SECRET=your_client_secret    # Discord Application Client Secret
 REDIRECT_URI=https://yourappdomain.com/discord/callback # Redirect URI for OAuth2
 DISCORD_TOKEN=your_bot_token        # Bot Token from Discord Developer Portal
-PORT=3000                           # (Optional) Port for the server; Railway will assign it dynamically```
+PORT=3000                           # (Optional) Port for the server; Railway will assign it dynamically
+````
 
 Explanation of Variables
 - CLIENT_ID: The client ID for your Discord application.
@@ -56,7 +47,9 @@ Explanation of Variables
 
 ## Commands
 
-```/sendverificationbutton```
+```
+/sendverificationbutton
+```
 
 This command sends a verification message with a button in the current channel. Users can click the button to begin the verification process.
 
@@ -64,9 +57,15 @@ This command sends a verification message with a button in the current channel. 
 ## Usage
 
 1. Start the Bot:
-```npm start```
+```
+npm start
+```
 2. Use the Verification Button:
-- In Discord, type ```/sendverificationbutton``` in a text channel where the bot has permissions.
+- In Discord, type 
+```
+/sendverificationbutton
+``` 
+in a text channel where the bot has permissions.
 - The bot will post a message with a Verify button.
 - Clicking the button starts the OAuth2 authentication flow.
 3. Complete Verification:
