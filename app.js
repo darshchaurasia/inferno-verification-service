@@ -47,20 +47,30 @@ client.once('ready', async () => {
 
 // Handle the /sendverificationbutton command
 client.on('interactionCreate', async (interaction) => {
-  if (interaction.isCommand() && interaction.commandName === 'sendverificationbutton') {
-    const row = new ActionRowBuilder().addComponents(
-      new ButtonBuilder()
-        .setCustomId('verify')
-        .setLabel('Verify')
-        .setStyle(ButtonStyle.Primary)
-    );
+  if (interaction.isButton() && interaction.customId === 'verify') {
+    try {
+      // Acknowledge the interaction immediately to prevent timeout
+      await interaction.deferReply({ ephemeral: true });
 
-    await interaction.reply({
-      content: 'Click the button below to verify and get the Verified role!',
-      components: [row],
-    });
+      // Generate the OAuth2 authorization URL
+      const authorizationUrl = oauth.generateAuthUrl({
+        clientId: config.clientId,
+        redirectUri: config.redirectUri,
+        scope: ['identify'],
+        responseType: 'code',
+        state: interaction.user.id, // Use Discord user ID as state
+      });
+
+      // Send the verification link as an edited reply
+      await interaction.editReply({
+        content: `Please click [here](${authorizationUrl}) to verify your account.`,
+      });
+    } catch (error) {
+      console.error('Error handling button interaction:', error);
+    }
   }
 });
+
 
 // Handle the /assignroles command, allowing it to be used once
 client.on('interactionCreate', async (interaction) => {
